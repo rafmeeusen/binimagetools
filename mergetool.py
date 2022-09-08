@@ -81,6 +81,7 @@ def main():
     parser.add_argument('-i', '--input', required=True, action='append', help='input file, use multiple -i for multiple input files')
     parser.add_argument('-o', '--offset', required=False, type=int, help='offset in number of bytes')
     parser.add_argument('-p', '--padsize', required=False, type=int, help='number of bytes to pad')
+    parser.add_argument('-s', '--size', required=False, type=int, help='new size of file after padding or offsetting')
     args = parser.parse_args()
     if len(args.cmd) > 1:
         raise Exception('too many cmds dont know what to do')
@@ -110,18 +111,24 @@ def main():
         if len(args.input) != 1:
             errmsg = 'FATAL ERROR. Padding requires one file argument'
             sys.exit(errmsg)
-        if not args.padsize:
-            errmsg = 'FATAL ERROR. Need size option when padding'
+        if args.padsize and args.size:
+            errmsg = 'FATAL ERROR. Cannot give both options padding size and full final size'
             sys.exit(errmsg)
         fn1=args.input[0]
+        infilesize = os.path.getsize(fn1)
+        if args.padsize:
+            padsize = args.padsize
+        elif args.size:
+            padsize = args.size - infilesize
+        else:
+            errmsg = 'FATAL ERROR. Need padding size option or full size option when padding'
+            sys.exit(errmsg)
         infile = open(fn1, 'rb')
-        padsize = args.padsize
         outfile = tempfile.NamedTemporaryFile(delete=False)
         pad(infile, padsize, outfile)
         infile.close()
         outfile.close()
         # doublecheck file size:
-        infilesize = os.path.getsize(fn1)
         outfilesize = os.path.getsize(outfile.name)
         expected_outfilesize = infilesize + padsize
         if outfilesize != expected_outfilesize:
