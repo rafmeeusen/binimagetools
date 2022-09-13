@@ -45,33 +45,49 @@ def merge(file1, file2, outfile):
 def main():
     parser = argparse.ArgumentParser(description='Binary image merger tool')
 
-    parser.add_argument('infile1', nargs=1, help='first input file')
-    parser.add_argument('infile2', nargs=1, help='second input file')
+    parser.add_argument('infiles', nargs='*', help='input files, minimum two')
     parser.add_argument('-f', '--outputfile', required=False, help='output file name')
     args = parser.parse_args()
 
-    fn1=args.infile1[0]
-    fn2=args.infile2[0]
-    s1 = os.path.getsize(fn1)
-    s2 = os.path.getsize(fn2)
-    if s1 != s2:
-        errmsg = 'FATAL ERROR. For merging both files need to be same size. Size are: ' + str(s1) + ' and ' + str(s2)
-        sys.exit(errmsg)
-    f1 = open(fn1, 'rb')
-    f2 = open(fn2, 'rb')
-    if args.outputfile:
-        outfile = open(args.outputfile, 'wb')
-    else:
-        outfile = tempfile.NamedTemporaryFile(delete=False)
+    if len(args.infiles) < 2:
+        excmsg = 'FATAL ERROR. Need at least two input files'
+        raise Exception(excmsg)
 
-    print('merging', f1.name, 'and', f2.name, 'into', outfile.name)
-    merge(f1, f2, outfile)
-    f1.close()
-    f2.close()
-    outfile.close()
-    # doublecheck file size:
-    if os.path.getsize(outfile.name) != s1:
-        print('WARNING: size of output file ' + outfile.name + ' is not same as input file size') 
+    # check file sizes are equal
+    print('comparing file sizes')
+    size0 = os.path.getsize(args.infiles[0])
+    for fn in args.infiles[1:]:
+        if os.path.getsize(fn) != size0:
+            errmsg = 'FATAL ERROR. For merging both files need to be same size. Different: ' + args.infiles[0] + ' and ' + fn
+            sys.exit(errmsg)
+
+    # open all input files
+    ifs = [open(fn,'rb') for fn in args.infiles]
+
+    # create tmp files (input/output)
+    nr_tmpfiles = len(args.infiles) - 2
+    tmpfs = [tempfile.NamedTemporaryFile(delete=False) for i in range(nr_tmpfiles)]
+
+    # now merge per two files
+    nextin = ifs[0]
+    for (infile,tmpout) in zip(ifs[1:-1], tmpfs):
+        print('merging', nextin.name, 'and', infile.name, 'into', tmpout.name)
+        merge(nextin, infile, tmpout)
+        nextin = tmpout
+    # last merge into final output:
+    if args.outputfile:
+        finalout = open(args.outputfile, 'wb')
+    else:
+        finalout = tempfile.NamedTemporaryFile(delete=False)
+    print('merging', nextin.name, 'and', ifs[-1].name, 'into', finalout.name)
+    merge(nextin, ifs[-1], finalout)
+
+    # close all files
+    for f in ifs:
+        f.close()
+    for t in tmpfs:
+        t.close()
+    finalout.close()
 
 if __name__ == '__main__':
     main()
