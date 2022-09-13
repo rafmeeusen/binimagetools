@@ -35,11 +35,11 @@ def main():
     if len(args.input) != 1:
         errmsg = 'FATAL ERROR. Offseting requires one file argument'
         sys.exit(errmsg)
-    if not args.offset:
-        errmsg = 'FATAL ERROR. Need offset option when offsetting'
-        sys.exit(errmsg)
     fn1=args.input[0]
-    byteoffset=args.offset
+    if not args.offset:
+        byteoffset=0
+    else:
+        byteoffset=args.offset
     outfile = tempfile.NamedTemporaryFile(delete=False)
     infile = open(fn1, 'rb')
     offset(infile, byteoffset, outfile)
