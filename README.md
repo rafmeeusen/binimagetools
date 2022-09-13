@@ -45,5 +45,5 @@ This method allows to create a a full flash image or a more complete partial ima
 ./offset.py dump50000.bin 102400000 -f dump50000.bin.o
 ./pad.py dump50000.bin.o -s 268435456 -f dump50000.bin.o.p
 
-../merge.py  dump*bin.o.p -f merged.bin`
+../merge.py  dump*bin.o.p -f merged.bin
 ```
