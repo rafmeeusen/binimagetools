@@ -30,7 +30,6 @@ def pad(infile, padsize, outfile):
 def main():
     parser = argparse.ArgumentParser(description='Binary image padding tool')
     parser.add_argument('-i', '--input', required=True, action='append', help='input file, use multiple -i for multiple input files')
-    parser.add_argument('-o', '--offset', required=False, type=int, help='offset in number of bytes')
     parser.add_argument('-p', '--padsize', required=False, type=int, help='number of bytes to pad')
     parser.add_argument('-s', '--size', required=False, type=int, help='new size of file after padding or offsetting')
     args = parser.parse_args()
