@@ -73,6 +73,7 @@ def main():
     for (infile,tmpout) in zip(ifs[1:-1], tmpfs):
         print('merging', nextin.name, 'and', infile.name, 'into', tmpout.name)
         merge(nextin, infile, tmpout)
+        tmpout.seek(0)
         nextin = tmpout
     # last merge into final output:
     if args.outputfile:
