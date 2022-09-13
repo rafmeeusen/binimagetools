@@ -20,7 +20,6 @@ merging: equal bytes are just copied, 0xff is considered EMPTY (so other file is
 assumption: inputs are equal size streams
 '''
 def merge(file1, file2, outfile):
-    print('merging', file1.name, 'and', file2.name, 'into', outfile.name)
     cnt = 0
     b1 = file1.read(1)
     while b1:
@@ -45,14 +44,14 @@ def merge(file1, file2, outfile):
 
 def main():
     parser = argparse.ArgumentParser(description='Binary image merger tool')
-    parser.add_argument('-i', '--input', required=True, action='append', help='input file, use multiple -i for multiple input files')
+
+    parser.add_argument('infile1', nargs=1, help='first input file')
+    parser.add_argument('infile2', nargs=1, help='second input file')
+    parser.add_argument('-f', '--outputfile', required=False, help='output file name')
     args = parser.parse_args()
 
-    if len(args.input) != 2:
-        errmsg = 'FATAL ERROR. Merging requires two file arguments' 
-        sys.exit(errmsg)
-    fn1=args.input[0]
-    fn2=args.input[1]
+    fn1=args.infile1[0]
+    fn2=args.infile2[0]
     s1 = os.path.getsize(fn1)
     s2 = os.path.getsize(fn2)
     if s1 != s2:
@@ -60,7 +59,12 @@ def main():
         sys.exit(errmsg)
     f1 = open(fn1, 'rb')
     f2 = open(fn2, 'rb')
-    outfile = tempfile.NamedTemporaryFile(delete=False)
+    if args.outputfile:
+        outfile = open(args.outputfile, 'wb')
+    else:
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+
+    print('merging', f1.name, 'and', f2.name, 'into', outfile.name)
     merge(f1, f2, outfile)
     f1.close()
     f2.close()
