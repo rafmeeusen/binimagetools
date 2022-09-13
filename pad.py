@@ -17,7 +17,6 @@ pad input stream to output stream, by copying input, then adding 0xff bytes
 newsize = or give new size
 '''
 def pad(infile, padsize, outfile):
-    print('padding', infile.name, 'with a padding size of', padsize, 'into', outfile.name)
     # copy stream
     while (data := infile.read()):
         outfile.write(data)
@@ -29,28 +28,35 @@ def pad(infile, padsize, outfile):
 
 def main():
     parser = argparse.ArgumentParser(description='Binary image padding tool')
-    parser.add_argument('-i', '--input', required=True, action='append', help='input file, use multiple -i for multiple input files')
-    parser.add_argument('-p', '--padsize', required=False, type=int, help='number of bytes to pad')
-    parser.add_argument('-s', '--size', required=False, type=int, help='new size of file after padding or offsetting')
+    parser.add_argument('infile', nargs=1, help='input file')
+    parser.add_argument('nrbytes', nargs=1, type=int, help='number of bytes')
+    parser.add_argument('-s', '--filesize', default=False, required=False, action='store_true', help='interpret number as new size of file after padding (DEFAULT)')
+    parser.add_argument('-p', '--padsize', default=False, required=False, action='store_true', help='interpret number as number of bytes to pad')
+    parser.add_argument('-f', '--outputfile', required=False, help='output file name')
     args = parser.parse_args()
 
-    if len(args.input) != 1:
-        errmsg = 'FATAL ERROR. Padding requires one file argument'
-        sys.exit(errmsg)
-    if args.padsize and args.size:
+    fn1=args.infile[0]
+    nrbytes=args.nrbytes[0]
+    infilesize = os.path.getsize(fn1)
+
+    if args.filesize and args.padsize:
         errmsg = 'FATAL ERROR. Cannot give both options padding size and full final size'
         sys.exit(errmsg)
-    fn1=args.input[0]
-    infilesize = os.path.getsize(fn1)
-    if args.padsize:
-        padsize = args.padsize
-    elif args.size:
-        padsize = args.size - infilesize
+    elif args.padsize:
+        padsize = nrbytes
     else:
-        errmsg = 'FATAL ERROR. Need padding size option or full size option when padding'
-        sys.exit(errmsg)
+        # final size given or nothing given
+        padsize = nrbytes - infilesize
+        if padsize < 0:
+            errmsg = 'FATAL ERROR. Calculated padding size negative. Cannot reach final file size of ' + str(nrbytes)
+            sys.exit(errmsg)
+            
     infile = open(fn1, 'rb')
-    outfile = tempfile.NamedTemporaryFile(delete=False)
+    if args.outputfile:
+        outfile = open(args.outputfile, 'wb')
+    else:
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+    print('padding', infile.name, 'with a padding size of', padsize, 'into', outfile.name, 'with a final size of', (infilesize+padsize))
     pad(infile, padsize, outfile)
     infile.close()
     outfile.close()
