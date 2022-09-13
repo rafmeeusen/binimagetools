@@ -17,7 +17,6 @@ offset function
 opposite of padding (first write 0xff, then copy stream)
 '''
 def offset(infile, nrbytes, outfile):
-    print('offsetting', infile.name, 'with offset', nrbytes, 'into', outfile.name)
     bytesleft = nrbytes
     while(bytesleft):
         outfile.write(b'\xff')
@@ -28,20 +27,20 @@ def offset(infile, nrbytes, outfile):
 
 def main():
     parser = argparse.ArgumentParser(description='Binary image offset tool')
-    parser.add_argument('-i', '--input', required=True, action='append', help='input file, use multiple -i for multiple input files')
-    parser.add_argument('-o', '--offset', required=False, type=int, help='offset in number of bytes')
+    parser.add_argument('infile', nargs=1, help='input file')
+    parser.add_argument('offset', nargs=1, type=int, help='offset in number of bytes')
+    parser.add_argument('-f', '--outputfile', required=False, help='output file name')
     args = parser.parse_args()
 
-    if len(args.input) != 1:
-        errmsg = 'FATAL ERROR. Offseting requires one file argument'
-        sys.exit(errmsg)
-    fn1=args.input[0]
-    if not args.offset:
-        byteoffset=0
-    else:
-        byteoffset=args.offset
-    outfile = tempfile.NamedTemporaryFile(delete=False)
+    fn1=args.infile[0]
+    byteoffset=args.offset[0]
     infile = open(fn1, 'rb')
+    if args.outputfile:
+        outfile = open(args.outputfile, 'wb')
+    else:
+        outfile = tempfile.NamedTemporaryFile(delete=False)
+
+    print('offsetting', infile.name, 'with offset', byteoffset, 'into', outfile.name)
     offset(infile, byteoffset, outfile)
     infile.close()
     outfile.close()
