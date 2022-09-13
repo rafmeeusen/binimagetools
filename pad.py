@@ -21,10 +21,14 @@ def pad(infile, padsize, outfile):
     while (data := infile.read()):
         outfile.write(data)
     bytesleft = padsize
+    bufsize=2048
     while(bytesleft):
-        outfile.write(b'\xff')
-        bytesleft -= 1
-
+        if bytesleft > bufsize:
+            outfile.write(bytearray([255] * bufsize))
+            bytesleft -= bufsize
+        else:
+            outfile.write(bytearray([255] * bytesleft))
+            bytesleft = 0
 
 def main():
     parser = argparse.ArgumentParser(description='Binary image padding tool')
