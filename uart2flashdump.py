@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 
 '''
 Tool to create flash dump via serial connection to a uboot with command "nand dump".
